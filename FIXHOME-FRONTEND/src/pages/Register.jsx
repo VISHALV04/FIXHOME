@@ -26,11 +26,8 @@ const Register = () => {
     setIsSubmitting(true);
     const result = await register(formData);
     if (result.success) {
-      if (formData.role === 'provider') {
-        navigate('/verification');
-      } else {
-        navigate('/dashboard');
-      }
+      // Provider always goes to verification first; user goes to dashboard
+      navigate(formData.role === 'provider' ? '/verification' : '/dashboard');
     }
     setIsSubmitting(false);
   };

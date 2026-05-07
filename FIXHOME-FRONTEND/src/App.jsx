@@ -9,40 +9,45 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import Verification from './pages/Verification';
+import VerificationPending from './pages/VerificationPending';
 
-// Protected Route Wrapper
+// Only approved users/admins can access dashboard
 const ProtectedRoute = ({ children, allowedRoles = [] }) => {
-  const { isAuthenticated, loading, role } = useAuth();
-
+  const { isAuthenticated, loading, role, user } = useAuth();
   if (loading) return <Loader fullScreen />;
-
-  if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
+  if (!isAuthenticated) return <Navigate to="/login" replace />;
+  if (role === 'provider' && user?.verificationStatus !== 'approved') {
+    return <Navigate to="/verification-pending" replace />;
   }
-
   if (allowedRoles.length > 0 && !allowedRoles.includes(role)) {
     return <Navigate to="/dashboard" replace />;
   }
-
   return children;
 };
 
-// Public Route Wrapper (GUEST ONLY)
-const PublicRoute = ({ children }) => {
-  const { isAuthenticated, loading } = useAuth();
-
+// Only unapproved providers can access verification routes
+const VerificationRoute = ({ children }) => {
+  const { isAuthenticated, loading, role, user } = useAuth();
   if (loading) return <Loader fullScreen />;
-
-  if (isAuthenticated) {
-    return <Navigate to="/dashboard" replace />;
-  }
-
+  if (!isAuthenticated) return <Navigate to="/login" replace />;
+  if (role !== 'provider') return <Navigate to="/dashboard" replace />;
+  if (user?.verificationStatus === 'approved') return <Navigate to="/dashboard" replace />;
   return children;
+};
+
+// Guests only — authenticated users get redirected appropriately
+const PublicRoute = ({ children }) => {
+  const { isAuthenticated, loading, role, user } = useAuth();
+  if (loading) return <Loader fullScreen />;
+  if (!isAuthenticated) return children;
+  if (role === 'provider' && user?.verificationStatus !== 'approved') {
+    return <Navigate to="/verification-pending" replace />;
+  }
+  return <Navigate to="/dashboard" replace />;
 };
 
 function App() {
   const { loading } = useAuth();
-
   if (loading) return <Loader fullScreen />;
 
   return (
@@ -51,52 +56,22 @@ function App() {
         <Navbar />
         <main className="flex-grow">
           <Routes>
-            {/* Public Routes */}
             <Route path="/" element={<Navigate to="/dashboard" replace />} />
-            <Route 
-              path="/login" 
-              element={
-                <PublicRoute>
-                  <Login />
-                </PublicRoute>
-              } 
-            />
-            <Route 
-              path="/register" 
-              element={
-                <PublicRoute>
-                  <Register />
-                </PublicRoute>
-              } 
-            />
 
-            {/* User/Common Protected Routes */}
-            <Route 
-              path="/dashboard" 
-              element={
-                <ProtectedRoute>
-                  <Dashboard />
-                </ProtectedRoute>
-              } 
-            />
+            <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
+            <Route path="/register" element={<PublicRoute><Register /></PublicRoute>} />
 
-            {/* Role-Specific Routes */}
-            <Route 
-              path="/verification" 
-              element={
-                <ProtectedRoute allowedRoles={['user']}>
-                  <Verification />
-                </ProtectedRoute>
-              } 
-            />
-            {/* Role-Specific Routes removed: /booking/:id */}
+            {/* Provider verification flow */}
+            <Route path="/verification" element={<VerificationRoute><Verification /></VerificationRoute>} />
+            <Route path="/verification-pending" element={<VerificationRoute><VerificationPending /></VerificationRoute>} />
 
-            {/* Fallback */}
+            {/* Approved users & admins */}
+            <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </main>
-        
-        {/* Simple Footer */}
+
         <footer className="bg-white border-t border-slate-200 py-12 mt-auto">
           <div className="max-w-7xl mx-auto px-4 text-center">
             <p className="text-slate-400 font-bold text-sm">© 2026 HomeAssist HQ. All rights reserved.</p>

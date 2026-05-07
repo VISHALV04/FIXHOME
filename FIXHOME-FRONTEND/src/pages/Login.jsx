@@ -74,7 +74,7 @@ const Login = () => {
           <div className="space-y-2">
             <div className="flex justify-between items-center px-1">
               <label className="text-sm font-bold text-slate-700">Password</label>
-              <button type="button" className="text-xs font-bold text-primary-600 hover:text-primary-700">Forgot?</button>
+              <button type="button" className="text-xs font-bold text-primary-600 hover:text-primary-700"></button>
             </div>
             <div className="relative">
               <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
@@ -111,11 +111,7 @@ const Login = () => {
           </Link>
         </p>
 
-        <div className="mt-8 pt-8 border-t border-slate-100 text-center">
-          <p className="text-xs text-slate-400 font-medium lowercase">
-            Tip: Use "provider@example.com" for provider role
-          </p>
-        </div>
+
       </motion.div>
     </div>
   );
